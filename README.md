@@ -221,7 +221,8 @@ uvicorn main:app --reload
 - **Lack of Strategic Behavior:** Outages and supply shocks are purely stochastic, but some shocks like recent Chinese rare earth export controls are strategic.
 - **Strategic Behavior and Adversarial Behavior:** Some countries may see "pain" for other countries as a reward. Obviously this is an issue for modelling strategic competition. This could lead to more adversarial dumping, efforts to take market share and spike markets and the like. A potential extension. 
 - **Demand is fixed.** Countries always need the same quantity each period. There is no demand seasonality or growth.
-- **No transport costs or logistics.** Suppliers deliver costlessly. In practice, freight rates and shipping routes matter significantly. While there is a strong optimization based literature here from the likes of Jun Ukita Shepard and Lincoln Pratson and Gosens / Turnbull / Jotzo this is not implemented here. 
+- **No transport costs or logistics.** Suppliers deliver costlessly. In practice, freight rates and shipping routes matter significantly. While there is a strong optimization based literature here from the likes of Jun Ukita Shepard and Lincoln Pratson and Gosens / Turnbull / Jotzo this is not implemented here.
+- **Supply recovery is immediate:** This could be true for commodities that are inherently short cycle like wheat or other grasses and maybe US fracking but is wholly unrealistic for mining. Having lags between the decision to produce and that production turning up is key. In most areas it is easier to restart idled capacity than it is to build it fresh. 
 - **Discrete action space.** The six allocation profiles are hand-designed. A continuous action space would allow finer-grained portfolio tuning but would also increase computational complexity.
 
 Architecture
