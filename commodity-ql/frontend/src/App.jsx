@@ -2,25 +2,25 @@ import React, { useState, useCallback } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart, BarChart, Bar, Cell, Legend, CartesianGrid, PieChart, Pie } from "recharts";
 
 /* ═══════════════════════════════════════════════════════════════════
-   DEFAULTS
+   DEFAULTS — V2: separate fixed/variable costs, init/max capacity
    ═══════════════════════════════════════════════════════════════════ */
 const D_SUP = [
-  {name:"Gulf-A",capacity:120,price:48,p_d:0.03,p_r:0.60},
-  {name:"Gulf-B",capacity:100,price:50,p_d:0.04,p_r:0.55},
-  {name:"Caspian-1",capacity:80,price:52,p_d:0.06,p_r:0.40},
-  {name:"West-Africa",capacity:70,price:55,p_d:0.08,p_r:0.35},
-  {name:"LatAm-North",capacity:60,price:47,p_d:0.05,p_r:0.50},
-  {name:"LatAm-South",capacity:50,price:49,p_d:0.04,p_r:0.55},
-  {name:"Arctic-Basin",capacity:40,price:62,p_d:0.10,p_r:0.25},
-  {name:"SE-Asia",capacity:55,price:51,p_d:0.05,p_r:0.45},
-  {name:"Australasia",capacity:45,price:54,p_d:0.03,p_r:0.65},
-  {name:"North-Sea",capacity:35,price:58,p_d:0.02,p_r:0.70},
+  {name:"Gulf-A",max_capacity:120,init_capacity:110,fixed_cost:8,variable_cost:48,p_d:0.03,p_r:0.60},
+  {name:"Gulf-B",max_capacity:100,init_capacity:90,fixed_cost:9,variable_cost:50,p_d:0.04,p_r:0.55},
+  {name:"Caspian-1",max_capacity:80,init_capacity:70,fixed_cost:10,variable_cost:52,p_d:0.06,p_r:0.40},
+  {name:"West-Africa",max_capacity:70,init_capacity:60,fixed_cost:11,variable_cost:55,p_d:0.08,p_r:0.35},
+  {name:"LatAm-North",max_capacity:60,init_capacity:55,fixed_cost:8,variable_cost:47,p_d:0.05,p_r:0.50},
+  {name:"LatAm-South",max_capacity:50,init_capacity:45,fixed_cost:9,variable_cost:49,p_d:0.04,p_r:0.55},
+  {name:"Arctic-Basin",max_capacity:40,init_capacity:30,fixed_cost:14,variable_cost:62,p_d:0.10,p_r:0.25},
+  {name:"SE-Asia",max_capacity:55,init_capacity:50,fixed_cost:10,variable_cost:51,p_d:0.05,p_r:0.45},
+  {name:"Australasia",max_capacity:45,init_capacity:42,fixed_cost:11,variable_cost:54,p_d:0.03,p_r:0.65},
+  {name:"North-Sea",max_capacity:35,init_capacity:33,fixed_cost:12,variable_cost:58,p_d:0.02,p_r:0.70},
 ];
 const D_CTR = [
-  {name:"Industria",demand:200,elasticity:-0.25,dom_cost:72,max_dom:0.30,stor_max:80,stor_cost:2.0,stor_init:20},
-  {name:"Pacifica",demand:150,elasticity:-0.35,dom_cost:68,max_dom:0.20,stor_max:50,stor_cost:2.5,stor_init:10},
-  {name:"Europa",demand:180,elasticity:-0.30,dom_cost:75,max_dom:0.25,stor_max:70,stor_cost:1.8,stor_init:15},
-  {name:"Emergent",demand:120,elasticity:-0.40,dom_cost:65,max_dom:0.15,stor_max:30,stor_cost:3.0,stor_init:5},
+  {name:"Industria",demand:200,elasticity:-0.25,dom_variable_cost:72,dom_fixed_cost:10,dom_max_capacity:80,dom_init_capacity:60,max_dom:0.30,stor_max:80,stor_cost:2.0,stor_init:20},
+  {name:"Pacifica",demand:150,elasticity:-0.35,dom_variable_cost:68,dom_fixed_cost:9,dom_max_capacity:50,dom_init_capacity:30,max_dom:0.20,stor_max:50,stor_cost:2.5,stor_init:10},
+  {name:"Europa",demand:180,elasticity:-0.30,dom_variable_cost:75,dom_fixed_cost:11,dom_max_capacity:70,dom_init_capacity:45,max_dom:0.25,stor_max:70,stor_cost:1.8,stor_init:15},
+  {name:"Emergent",demand:120,elasticity:-0.40,dom_variable_cost:65,dom_fixed_cost:8,dom_max_capacity:30,dom_init_capacity:18,max_dom:0.15,stor_max:30,stor_cost:3.0,stor_init:5},
 ];
 const D_SPOT = 55.0;
 
@@ -40,8 +40,28 @@ async function runViaAPI(sups, ctrs, bSpot) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      suppliers: sups.map(s => ({ name: s.name, capacity: s.capacity, price: s.price, p_d: s.p_d, p_r: s.p_r })),
-      countries: ctrs.map(c => ({ name: c.name, demand: c.demand, elasticity: c.elasticity, dom_cost: c.dom_cost, max_dom: c.max_dom, stor_max: c.stor_max, stor_cost: c.stor_cost, stor_init: c.stor_init })),
+      suppliers: sups.map(s => ({
+        name: s.name,
+        max_capacity: s.max_capacity,
+        init_capacity: s.init_capacity,
+        fixed_cost: s.fixed_cost,
+        variable_cost: s.variable_cost,
+        p_d: s.p_d,
+        p_r: s.p_r,
+      })),
+      countries: ctrs.map(c => ({
+        name: c.name,
+        demand: c.demand,
+        elasticity: c.elasticity,
+        dom_variable_cost: c.dom_variable_cost,
+        dom_fixed_cost: c.dom_fixed_cost,
+        dom_max_capacity: c.dom_max_capacity,
+        dom_init_capacity: c.dom_init_capacity,
+        max_dom: c.max_dom,
+        stor_max: c.stor_max,
+        stor_cost: c.stor_cost,
+        stor_init: c.stor_init,
+      })),
       base_spot: bSpot,
       train_episodes: 3000,
       eval_sims: 400,
@@ -122,7 +142,7 @@ const XP = { tick: { fill: '#999', fontSize: 11 }, stroke: GS };
 const YP = { tick: { fill: '#999', fontSize: 11 }, stroke: GS };
 
 /* ═══════════════════════════════════════════════════════════════════
-   PARAMETER TAB
+   PARAMETER TAB — V2 fields
    ═══════════════════════════════════════════════════════════════════ */
 function ParamTab({ sups, setSups, ctrs, setCtrs, bSpot, setBSpot, onRun, running, progress }) {
   const uS = (i, k, v) => setSups(sups.map((s, j) => j === i ? { ...s, [k]: v } : s));
@@ -149,19 +169,21 @@ function ParamTab({ sups, setSups, ctrs, setCtrs, bSpot, setBSpot, onRun, runnin
       <Card style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Suppliers <span style={{ color: '#999', fontWeight: 400, fontSize: 13 }}>({sups.length})</span></div>
-          <button onClick={() => sups.length < 15 && setSups([...sups, { name: `Sup-${sups.length + 1}`, capacity: 50, price: 55, p_d: 0.05, p_r: 0.5 }])}
+          <button onClick={() => sups.length < 15 && setSups([...sups, { name: `Sup-${sups.length + 1}`, max_capacity: 50, init_capacity: 45, fixed_cost: 10, variable_cost: 55, p_d: 0.05, p_r: 0.5 }])}
             style={{ background: '#e8f5e9', border: 'none', borderRadius: 5, color: '#1e8449', padding: '5px 14px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr>{["Name", "Capacity", "Price", "P(Disrupt)", "P(Recover)", "SS Off%", ""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{["Name", "Max Cap", "Init Cap", "Fixed $/u", "Var $/u", "P(Disrupt)", "P(Recover)", "SS Off%", ""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
             <tbody>{sups.map((s, i) => {
               const ss = s.p_d / (s.p_d + s.p_r);
               return (
                 <tr key={i} style={{ borderBottom: '1px solid #f5f5f5' }}>
                   <td style={td}><input type="text" value={s.name} onChange={e => uS(i, 'name', e.target.value)} style={{ ...IS, width: 100, fontFamily: 'inherit' }} /></td>
-                  <td style={td}><NI value={s.capacity} onChange={v => uS(i, 'capacity', v)} step={5} min={1} style={{ width: 62 }} /></td>
-                  <td style={td}><NI value={s.price} onChange={v => uS(i, 'price', v)} step={1} min={1} style={{ width: 62 }} /></td>
+                  <td style={td}><NI value={s.max_capacity} onChange={v => uS(i, 'max_capacity', v)} step={5} min={1} style={{ width: 62 }} /></td>
+                  <td style={td}><NI value={s.init_capacity} onChange={v => uS(i, 'init_capacity', v)} step={5} min={1} style={{ width: 62 }} /></td>
+                  <td style={td}><NI value={s.fixed_cost} onChange={v => uS(i, 'fixed_cost', v)} step={1} min={0} style={{ width: 62 }} /></td>
+                  <td style={td}><NI value={s.variable_cost} onChange={v => uS(i, 'variable_cost', v)} step={1} min={1} style={{ width: 62 }} /></td>
                   <td style={td}><NI value={s.p_d} onChange={v => uS(i, 'p_d', v)} step={0.01} min={0} max={1} style={{ width: 62 }} /></td>
                   <td style={td}><NI value={s.p_r} onChange={v => uS(i, 'p_r', v)} step={0.05} min={0.01} max={1} style={{ width: 62 }} /></td>
                   <td style={{ ...td, fontFamily: 'monospace', fontWeight: 600, color: ss > .15 ? '#c0392b' : ss > .08 ? '#d4890a' : '#1e8449', textAlign: 'center' }}>{(ss * 100).toFixed(1)}%</td>
@@ -176,18 +198,21 @@ function ParamTab({ sups, setSups, ctrs, setCtrs, bSpot, setBSpot, onRun, runnin
       <Card>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 15, fontWeight: 700 }}>Countries <span style={{ color: '#999', fontWeight: 400, fontSize: 13 }}>({ctrs.length})</span></div>
-          <button onClick={() => ctrs.length < 8 && setCtrs([...ctrs, { name: `Country-${ctrs.length + 1}`, demand: 100, elasticity: -.3, dom_cost: 70, max_dom: .2, stor_max: 40, stor_cost: 2, stor_init: 10 }])}
+          <button onClick={() => ctrs.length < 8 && setCtrs([...ctrs, { name: `Country-${ctrs.length + 1}`, demand: 100, elasticity: -.3, dom_variable_cost: 70, dom_fixed_cost: 10, dom_max_capacity: 40, dom_init_capacity: 30, max_dom: .2, stor_max: 40, stor_cost: 2, stor_init: 10 }])}
             style={{ background: '#e8f5e9', border: 'none', borderRadius: 5, color: '#1e8449', padding: '5px 14px', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>+ Add</button>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-            <thead><tr>{["Name", "Demand", "Elast.", "Dom Cost", "Max Dom%", "Stor Cap", "$/per", "Init", ""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
+            <thead><tr>{["Name", "Demand", "Elast.", "Dom Var$", "Dom Fix$", "Dom Max", "Dom Init", "Max Dom%", "Stor Cap", "$/per", "Init", ""].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
             <tbody>{ctrs.map((c, i) => (
               <tr key={i} style={{ borderBottom: '1px solid #f5f5f5' }}>
                 <td style={td}><input type="text" value={c.name} onChange={e => uC(i, 'name', e.target.value)} style={{ ...IS, width: 100, fontFamily: 'inherit' }} /></td>
                 <td style={td}><NI value={c.demand} onChange={v => uC(i, 'demand', v)} step={10} min={1} style={{ width: 62 }} /></td>
                 <td style={td}><NI value={c.elasticity} onChange={v => uC(i, 'elasticity', v)} step={.05} min={-2} max={0} style={{ width: 62 }} /></td>
-                <td style={td}><NI value={c.dom_cost} onChange={v => uC(i, 'dom_cost', v)} step={1} min={1} style={{ width: 62 }} /></td>
+                <td style={td}><NI value={c.dom_variable_cost} onChange={v => uC(i, 'dom_variable_cost', v)} step={1} min={1} style={{ width: 62 }} /></td>
+                <td style={td}><NI value={c.dom_fixed_cost} onChange={v => uC(i, 'dom_fixed_cost', v)} step={1} min={0} style={{ width: 62 }} /></td>
+                <td style={td}><NI value={c.dom_max_capacity} onChange={v => uC(i, 'dom_max_capacity', v)} step={5} min={0} style={{ width: 62 }} /></td>
+                <td style={td}><NI value={c.dom_init_capacity} onChange={v => uC(i, 'dom_init_capacity', v)} step={5} min={0} style={{ width: 62 }} /></td>
                 <td style={td}><NI value={c.max_dom} onChange={v => uC(i, 'max_dom', v)} step={.05} min={0} max={1} style={{ width: 62 }} /></td>
                 <td style={td}><NI value={c.stor_max} onChange={v => uC(i, 'stor_max', v)} step={5} min={0} style={{ width: 58 }} /></td>
                 <td style={td}><NI value={c.stor_cost} onChange={v => uC(i, 'stor_cost', v)} step={.5} min={0} style={{ width: 58 }} /></td>
