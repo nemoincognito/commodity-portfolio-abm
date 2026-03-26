@@ -217,10 +217,12 @@ uvicorn main:app --reload
 ## Limitations
 
 - **Tabular Q-learning** scales poorly. With 240 states and 18 actions per country, this works well for 1–3 countries. For larger problems, a neural network–based approach (e.g. DQN or PPO) would be needed.
-- **Countries learn independently.** Each country's agent optimises for itself without considering how its actions affect other countries' costs. There is no game-theoretic equilibrium — just parallel single-agent optimisation.
+- **Countries learn independently.** Each country's agent optimises for itself without considering how its actions affect other countries' costs. There is no game-theoretic equilibrium — just parallel single-agent optimisation. This may be reasonable for markets without concentration but is unrealistic for concentrated share where participants infer about strategic behavior (OPEC, many critical minerals or other commodities).
+- **Lack of Strategic Behavior:** Outages and supply shocks are purely stochastic, but some shocks like recent Chinese rare earth export controls are strategic.
+- **Strategic Behavior and Adversarial Behavior:** Some countries may see "pain" for other countries as a reward. Obviously this is an issue for modelling strategic competition. This could lead to more adversarial dumping, efforts to take market share and spike markets and the like. A potential extension. 
 - **Demand is fixed.** Countries always need the same quantity each period. There is no demand seasonality or growth.
-- **No transport costs or logistics.** Suppliers deliver costlessly. In practice, freight rates and shipping routes matter significantly.
-- **Discrete action space.** The six allocation profiles are hand-designed. A continuous action space would allow finer-grained portfolio tuning.
+- **No transport costs or logistics.** Suppliers deliver costlessly. In practice, freight rates and shipping routes matter significantly. While there is a strong optimization based literature here from the likes of Jun Ukita Shepard and Lincoln Pratson and Gosens / Turnbull / Jotzo this is not implemented here. 
+- **Discrete action space.** The six allocation profiles are hand-designed. A continuous action space would allow finer-grained portfolio tuning but would also increase computational complexity.
 
 Architecture
 ```
