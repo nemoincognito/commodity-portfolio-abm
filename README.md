@@ -4,7 +4,7 @@ optimisation. Four country-agents learn adaptive contracting, spot-market,
 and storage strategies through Q-learning in a shared market with Markov
 supply disruptions and demand-elasticity price clearing.
 
-Previously suppliers had fixed capacity and a single price. Now each supplier has a fixed cost (incurred per unit of capacity maintained) and a variable cost (incurred per unit actually produced). Each period, suppliers observe their contracted volumes and spot sales from the previous period and decide whether to maintain, expand, or shrink capacity. If countries build large storage buffers and reduce offtake, suppliers rationally shed capacity — which then makes future disruptions worse because there's less slack in the system. This creates a feedback loop: storage policy affects supplier capacity decisions, which affects the risk environment the agents are learning in.
+Each supplier has a fixed cost (incurred per unit of capacity maintained) and a variable cost (incurred per unit actually produced). Each period, suppliers observe their contracted volumes and spot sales from the previous period and decide whether to maintain, expand, or shrink capacity. If countries build large storage buffers and reduce offtake, suppliers rationally shed capacity — which then makes future disruptions worse because there's less slack in the system. This creates a feedback loop: storage policy affects supplier capacity decisions, which affects the risk environment the agents are learning in.
 Domestic production gets the same treatment — countries must pay fixed costs to maintain domestic capacity whether or not they use it. This makes the "heavy-domestic" strategy more expensive during calm periods but still valuable as insurance.
 
 Architecture
